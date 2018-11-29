@@ -50,7 +50,7 @@ def get_orb_info(frame):
     Given a frame return the SIFT keypoints and descriptors
     """
     MAX_MATCHES = 500
-    orb = cv2.ORB_create(MAX_MATCHES)
+    orb = cv2.ORB_create()
     # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     kp, des = orb.detectAndCompute(frame, None)
     return kp, des
@@ -59,13 +59,38 @@ def get_orb_info(frame):
 def get_homography_info(camera_image, test_image):
     kp_calib, des_calib = get_orb_info(camera_image)
     kp_training, des_training = get_orb_info(test_image)
-    matches = get_flann_matches(
-            camera_image,
-            test_image,
-            des_calib,
-            des_training)
+    #matches = get_flann_matches(
+    #        camera_image,
+    #        test_image,
+    #        des_calib,
+    #        des_training)
+    matches = get_matches(des_calib, des_training)
     if not matches:
         return
+
+    # Let's look at our matches!
+    imMatches = cv2.drawMatches(camera_image, kp_calib, test_image, kp_training, matches, None)
+    cv2.imshow("Found!", imMatches)
+    cv2.waitKey(0)
+
+    # Extract location of good matches
+    points1 = np.zeros((len(matches), 2), dtype=np.float32)
+    points2 = np.zeros((len(matches), 2), dtype=np.float32)
+
+    for i, match in enumerate(matches):
+        points1 [i, :] = kp_calib[match.queryIdx].pt
+        points2 [i, :] = kp_training[match.trainIdx].pt
+
+    # Find Homography
+    h, mask = cv2.findHomography(points1, points2, cv2.RANSAC)
+
+    # Use homography
+    height, width = test_image.shape
+    im1Reg = cv2.warpPerspective(camera_image, h, (width, height))
+
+    cv2.imwrite('out.jpg', im1Reg)
+    return im1Reg, h
+
     src_pts = np.float32([ kp_calib[m.queryIdx].pt for m in matches ]).reshape(-1, 1, 2)
     dst_pts = np.float32([ kp_training[m.queryIdx].pt for m in matches ]).reshape(-1, 1, 2)
 
@@ -92,6 +117,19 @@ def get_homography_info(camera_image, test_image):
             **draw_params)
     cv2.imshow(found_image)
     cv2.waitKey(0)
+
+
+def get_matches(des1, des2):
+    matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
+    matches = matcher.match(des1, des2, None)
+    # Sort by score
+    matches.sort(key=lambda x: x.distance, reverse=False)
+    # Take the top matches
+    MATCH_PERCENT = 0.15
+    cutPoint = int(len(matches) * MATCH_PERCENT)
+    matches = matches[:cutPoint]
+    return matches
+    
 
 
 def get_flann_matches(image1, image2, des1, des2):
@@ -123,7 +161,7 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # Load the calibration image
-    training_frame = cv2.imread("calibration_image.png", 0)
+    training_frame = cv2.imread("calibration_image.jpg", 0)
 
     # For setup, let's load a preview and make sure the camera can see the screen
     get_camera_image(v_stream, preview=True)
