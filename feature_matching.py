@@ -120,14 +120,16 @@ def get_homography_info(camera_image, test_image):
 
 
 def get_matches(des1, des2):
-    matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
-    matches = matcher.match(des1, des2, None)
+    #matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
+    #matches = matcher.match(des1, des2, None)
+    matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = matcher.match(des1, des2)
     # Sort by score
     matches.sort(key=lambda x: x.distance, reverse=False)
     # Take the top matches
-    MATCH_PERCENT = 0.15
-    cutPoint = int(len(matches) * MATCH_PERCENT)
-    matches = matches[:cutPoint]
+    #MATCH_PERCENT = 0.15
+    #cutPoint = int(len(matches) * MATCH_PERCENT)
+    matches = matches[:10]
     return matches
     
 
@@ -161,7 +163,7 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # Load the calibration image
-    training_frame = cv2.imread("calibration_image.jpg", 0)
+    training_frame = cv2.imread("calibration_image.old.png", 0)
 
     # For setup, let's load a preview and make sure the camera can see the screen
     get_camera_image(v_stream, preview=True)
