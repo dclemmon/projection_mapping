@@ -5,6 +5,7 @@
 """
 
 import time
+import json
 
 import cv2
 
@@ -35,6 +36,17 @@ def hide_calibration_frame(window="Calibration"):
     cv2.destroyWindow(window)
 
 
+def saveJSON(data):
+    """
+    Save our data object as json to the camera_config file
+    """
+    filename = 'camera_config.json'
+    print('Saving to file: ' + filename)
+    json_data = json.dumps(data)
+    with open(filename, 'w') as f:
+        f.write(json_data)
+
+
 def calibrate_camera():
     """
 
@@ -60,8 +72,7 @@ def calibrate_camera():
 
         markerCorners, markerIds, _ = aruco.detectMarkers(
             gray,
-            # markerDictionary,  # This may be a bug, could need to be charucoDictionary
-            charucoDictionary,  # This may be a bug, could need to be charucoDictionary
+            charucoDictionary,
             parameters=detectorParams)
 
         if len(markerCorners) > 0 and frameIdx % frameSpacing == 0:
@@ -101,7 +112,11 @@ def calibrate_camera():
                 None)
             print('Calibrated with error: ', err)
 
-            # TODO Save off the data, JSON could work, so could numpy
+            saveJSON({
+                'cameraMatrix': cameraMatrix.tolist(),
+                'distCoeffs': distCoeffs.tolist(),
+                'err': err
+            })
 
             print('...DONE')
         except Exception as e:
