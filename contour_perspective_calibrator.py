@@ -61,7 +61,7 @@ def load_camera_props(props_file=None):
     return cameraMatrix, distCoeffs
 
 
-def undistort_image(image):
+def undistort_image(image, cameraMatrix=None, distCoeffs=None):
     """
     Given an image from the camera module, laod the camera properties and correct
     for camera distortion
@@ -69,8 +69,9 @@ def undistort_image(image):
     resolution = image.shape
     if len(resolution) == 3:
         resolution = resolution[:2]
+    if cameraMatrix is None and distCoeffs is None:
+        cameraMatrix, distCoeffs = load_camera_props()
     resolution = resolution[::-1]  # Shape gives us (height, width) so reverse it
-    cameraMatrix, distCoeffs = load_camera_props()
     newCameraMatrix, validPixROI = cv2.getOptimalNewCameraMatrix(
         cameraMatrix,
         distCoeffs,
@@ -90,6 +91,9 @@ def undistort_image(image):
 
 
 def find_edges(frame):
+    """
+    Given a frame, find the edges
+    """
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray = cv2.bilateralFilter(gray, 11, 17, 17)  # Add some blur
     edged = cv2.Canny(gray, 30, 200)  # Find our edges
@@ -175,18 +179,18 @@ def get_perspective_transform(stream):
     return the perspective transform, maxWidth, and maxHeight for the 
     projected region
     """
-    # Grab a photo of the frame
-    frame = stream.read()
-
     reference_image = get_reference_image()
 
-    # We're going to work with a smaller image, so we need to save the scale
-    ratio = frame.shape[0] / 300.0
     # Display the reference image
     show_full_frame(reference_image)
     # Delay execution a quarter of a second to make sure the image is displayed 
     # Don't use time.sleep() here, we want the IO loop to run.  Sleep doesn't do that
     cv2.waitKey(250) 
+
+    # Grab a photo of the frame
+    frame = stream.read()
+    # We're going to work with a smaller image, so we need to save the scale
+    ratio = frame.shape[0] / 300.0
 
     # Undistort the camera image
     frame = undistort_image(frame)
