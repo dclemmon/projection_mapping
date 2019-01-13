@@ -14,7 +14,6 @@ from imutils.video import VideoStream
 
 from charuco import charucoBoard
 from charuco import charucoDictionary
-# from charuco import markerDictionary
 from charuco import detectorParams
 
 
@@ -36,7 +35,7 @@ def hide_calibration_frame(window="Calibration"):
     cv2.destroyWindow(window)
 
 
-def saveJSON(data):
+def save_json(data):
     """
     Save our data object as json to the camera_config file
     """
@@ -51,16 +50,16 @@ def calibrate_camera():
     """
 
     """
-    REQUIRED_COUNT = 50
+    required_count = 50
     resolution = (960, 720)
     stream = VideoStream(usePiCamera=True, resolution=resolution).start()
-    time.sleep(3)  # Warm up the camera
+    time.sleep(2)  # Warm up the camera
 
-    allCorners = []
-    allIds = []
+    all_corners = []
+    all_ids = []
 
-    frameIdx = 0
-    frameSpacing = 5
+    frame_idx = 0
+    frame_spacing = 5
     success = False
 
     calibration_board = charucoBoard.draw((1680, 1050))
@@ -70,32 +69,32 @@ def calibrate_camera():
         frame = stream.read()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        markerCorners, markerIds, _ = aruco.detectMarkers(
+        marker_corners, marker_ids, _ = aruco.detectMarkers(
             gray,
             charucoDictionary,
             parameters=detectorParams)
 
-        if len(markerCorners) > 0 and frameIdx % frameSpacing == 0:
-            ret, charucoCorners, charucoIds = aruco.interpolateCornersCharuco(
-                markerCorners,
-                markerIds,
+        if len(marker_corners) > 0 and frame_idx % frame_spacing == 0:
+            ret, charuco_corners, charuco_ids = aruco.interpolateCornersCharuco(
+                marker_corners,
+                marker_ids,
                 gray,
                 charucoBoard
                 )
-            if charucoCorners is not None and charucoIds is not None and len(charucoCorners) > 3:
-                allCorners.append(charucoCorners)
-                allIds.append(charucoIds)
+            if charuco_corners is not None and charuco_ids is not None and len(charuco_corners) > 3:
+                all_corners.append(charuco_corners)
+                all_ids.append(charuco_ids)
 
-            aruco.drawDetectedMarkers(gray, markerCorners, markerIds)
+            aruco.drawDetectedMarkers(gray, marker_corners, marker_ids)
         # cv2.imshow('frame', gray)  # If we're showing the calibration image, we can't preview
 
         if cv2.waitKey(1) & 255 == ord('q'):
             break
 
-        frameIdx += 1
-        print("Found: " + str(len(allIds)) + " / " + str(REQUIRED_COUNT))
+        frame_idx += 1
+        print("Found: " + str(len(all_ids)) + " / " + str(required_count))
 
-        if len(allIds) >= REQUIRED_COUNT:
+        if len(all_ids) >= required_count:
             success = True
             break
     hide_calibration_frame()
@@ -103,18 +102,18 @@ def calibrate_camera():
         print('Finished collecting data, computing...')
 
         try:
-            err, cameraMatrix, distCoeffs, rvecs, tvecs = aruco.calibrateCameraCharuco(
-                allCorners,
-                allIds,
+            err, camera_matrix, dist_coeffs, rvecs, tvecs = aruco.calibrateCameraCharuco(
+                all_corners,
+                all_ids,
                 charucoBoard,
                 resolution,
                 None,
                 None)
             print('Calibrated with error: ', err)
 
-            saveJSON({
-                'cameraMatrix': cameraMatrix.tolist(),
-                'distCoeffs': distCoeffs.tolist(),
+            save_json({
+                'camera_matrix': camera_matrix.tolist(),
+                'dist_coeffs': dist_coeffs.tolist(),
                 'err': err
             })
 
@@ -124,16 +123,16 @@ def calibrate_camera():
             success = False
 
         # Generate the corrections
-        newCameraMatrix, validPixROI = cv2.getOptimalNewCameraMatrix(
-            cameraMatrix,
-            distCoeffs,
+        new_camera_matrix, valid_pix_roi = cv2.getOptimalNewCameraMatrix(
+            camera_matrix,
+            dist_coeffs,
             resolution,
             0)
         mapx, mapy = cv2.initUndistortRectifyMap(
-            cameraMatrix,
-            distCoeffs,
+            camera_matrix,
+            dist_coeffs,
             None,
-            newCameraMatrix,
+            new_camera_matrix,
             resolution,
             5)
         while True:
