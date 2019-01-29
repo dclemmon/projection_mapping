@@ -20,7 +20,7 @@ from charuco import detectorParams
 def show_calibration_frame(frame):
     """
     Given a calibration frame, display the image in full screen
-    Usecase is a projector.  The camera module can find the projection region
+    Use case is a projector.  The camera module can find the projection region
     using the test pattern
     """
     cv2.namedWindow("Calibration", cv2.WND_PROP_FULLSCREEN)
@@ -38,6 +38,7 @@ def hide_calibration_frame(window="Calibration"):
 def save_json(data):
     """
     Save our data object as json to the camera_config file
+    :param data: data to  write to file
     """
     filename = 'camera_config.json'
     print('Saving to file: ' + filename)

@@ -16,22 +16,23 @@ import cv2
 import numpy as np
 
 
-def build_image(frame, display_resolution, markers, predictor):
+def build_image(frame, display_resolution, markers, predictor, sprite_path):
     """
     Function to build our marker image
     We're building a black image and adding the proper markers to it, so that
     when it's projected, only the markers display on the target
-    :param frame: corrected and transformed image
+    :param frame: corrected and transformed image (already b&w)
     :param display_resolution: the current displayed or projected screen resolution
     :param markers: Found detector markers
     :param predictor: the loaded facial predictor
+    :param sprite_path: the location of the sprite
     :return: built image
     """
     d_width, d_height = display_resolution
     f_height, f_width = frame.shape
     img = np.zeros((d_height, d_width, 3), np.uint8)
     for mark in markers:
-        shape = predictor(gray, mark)
+        shape = predictor(frame, mark)
         shape = face_utils.shape_to_np(shape)
         # Grab some info from the detected face.
         # The top and left give us the origin
@@ -44,29 +45,28 @@ def build_image(frame, display_resolution, markers, predictor):
 
         scaled_shape = np.copy(shape)
         for index, (x, y) in enumerate(shape):
-            # We need to map our points to the new image from the origial
+            # We need to map our points to the new image from the original
             new_x = int(np.interp(x, [0, f_width], [0, d_width]))
             new_y = int(np.interp(y, [0, f_height], [0, d_height]))
             scaled_shape[index] = [new_x, new_y]
             # Uncomment the line below to set the point projected on the target
             # cv2.circle(img, (new_x, new_y), 1, (255, 255, 255), -1)
         inclination = calc_incl(scaled_shape[17], scaled_shape[26])  # get the info from eyebrows
-        apply_sprite(img, face_width, face_left, face_top, inclination)
+        apply_sprite(img, face_width, face_left, face_top, inclination, sprite_path)
     return img
 
 
 def apply_sprite(image, width, x, y, angle, sprite_file):
     """
     Given an image, add our sprite
-    :param image:
-    :param width:
-    :param x:
-    :param y:
-    :param angle:
+    :param image: our image to be projected
+    :param width: Target face width
+    :param x: Face location left
+    :param y: Face location top
+    :param angle: face tilt
     :param sprite_file: the filename of our sprite
-    :return:
+    :return: projection image
     """
-    # sprite = cv2.imread('santa_hat.png', -1)
     sprite = cv2.imread(sprite_file, cv2.IMREAD_UNCHANGED)
     sprite = rotate_bound(sprite, angle)
     sprite, y_final = transform_sprite(sprite, width, y)
@@ -82,7 +82,7 @@ def apply_sprite(image, width, x, y, angle, sprite_file):
         sp_w = sprite.shape[1]
         x = 0
 
-    # loop through and combine the image and sprite based on their alpha vlues
+    # loop through and combine the image and sprite based on the sprite alpha values
     for chan in range(3):
         image[y_final:y_final+sp_h, x:x+sp_w, chan] = \
                 sprite[:, :, chan] * (sprite[:, :, 3] / 255.0) + \
@@ -172,7 +172,7 @@ if __name__ == '__main__':
 
         rects = detector(gray, 0)
 
-        image = build_image(gray, screen_resolution, rects, predictor)
+        image = build_image(gray, screen_resolution, rects, predictor, args.get('sprite'))
 
         show_full_frame(image)
         key = cv2.waitKey(1) & 0xFF

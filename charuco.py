@@ -19,19 +19,19 @@ charucoNSqHoriz = 16
 # charucoDictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 charucoDictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
 charucoBoard = aruco.CharucoBoard_create(
-        charucoNSqHoriz,
-        charucoNSqVert,
-        charucoSqSizeM,
-        charucoMarkerSizeM,
-        charucoDictionary)
+    charucoNSqHoriz,
+    charucoNSqVert,
+    charucoSqSizeM,
+    charucoMarkerSizeM,
+    charucoDictionary)
 
 perspectiveDictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 perspectiveBoard = aruco.CharucoBoard_create(
-        3,  # We only want four corners for the perspective transform
-        3,  # We only want four corners for the perspective transform
-        charucoSqSizeM,
-        charucoMarkerSizeM,
-        perspectiveDictionary)
+    3,  # We only want four corners for the perspective transform
+    3,  # We only want four corners for the perspective transform
+    charucoSqSizeM,
+    charucoMarkerSizeM,
+    perspectiveDictionary)
 
 markerDictionary = aruco.getPredefinedDictionary(aruco.DICT_5X5_50)
 markerSizeIn = 5
