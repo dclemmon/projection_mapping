@@ -239,18 +239,18 @@ def parse_args():
     """
     ap = argparse.ArgumentParser()
     # Camera frame resolution
-    ap.add_argument('-w', '--camera_width', type=int, default=960,
-                    required=True, help='Camera image width')
-    ap.add_argument('-h', '--camera_height', type=int, default=720,
-                    required=True, help='Camera image height')
+    ap.add_argument('-cw', '--camera_width', type=int, default=960,
+                    help='Camera image width')
+    ap.add_argument('-ch', '--camera_height', type=int, default=720,
+                    help='Camera image height')
     # camera property file
     ap.add_argument('-f', '--camera_props', default='camera_config.json',
-                    required=True, help='Camera property file')
+                    help='Camera property file')
     # Screen resolution
     ap.add_argument('-sw', '--screen_width', type=int, default=1680,
-                    required=True, help='Projector or screen width')
+                    help='Projector or screen width')
     ap.add_argument('-sh', '--screen_height', type=int, default=1050,
-                    required=True, help='Projector or screen height')
+                    help='Projector or screen height')
     return vars(ap.parse_args())
 
 
