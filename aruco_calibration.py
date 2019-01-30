@@ -49,7 +49,7 @@ def save_json(data):
 
 def calibrate_camera():
     """
-
+    Calibrate our camera
     """
     required_count = 50
     resolution = (960, 720)
